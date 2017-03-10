@@ -40,7 +40,7 @@ class Play(models.Model):
     end = models.DateTimeField()
 
     def __unicode__(self):
-        return self.title
+        return self.title.title
 
     class Meta:
         unique_together = ("channel", "start")

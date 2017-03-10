@@ -25,3 +25,9 @@ class PlaySerializer(serializers.ModelSerializer):
     class Meta:
         model = Play
         fields = '__all__'
+
+
+class GetChannelSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Play
+        fields = ('performer', 'title', 'start', 'end')

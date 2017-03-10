@@ -1,14 +1,32 @@
-# from django.shortcuts import render
-# from rest_framework import generics
-# from django.http import Http404
+from datetime import datetime
+
+from rest_framework import generics, status
 from rest_framework.views import APIView
+from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
-from rest_framework import status
 
+from .models import Play
 
-# from .models import Channel, Performer, Song
+#  POST serializers
 from .serializers import ChannelSerializer, PerformerSerializer,\
                          PlaySerializer, SongSerializer
+#  GET serializers
+from .serializers import GetChannelSerializer
+
+DTPATT = '%Y-%m-%dT%H:%M:%S'
+
+
+class CustomJSONRenderer(JSONRenderer):
+    def render(self, data, accepted_media_type=None, renderer_context=None):
+        response_data = {}
+        response_data['result'] = data
+        response_data['code'] = 0
+
+        response = super(CustomJSONRenderer, self).\
+            render(response_data, accepted_media_type,
+                   renderer_context)
+
+        return response
 
 
 class ChannelView(APIView):
@@ -96,3 +114,16 @@ class PlayView(APIView):
         }
 
         return Response(response, status=status.HTTP_200_OK)
+
+
+class GetChannelPlay(generics.ListAPIView):
+    serializer_class = GetChannelSerializer
+    renderer_classes = (CustomJSONRenderer, )
+
+    def get_queryset(self):
+        channel = self.request.query_params['channel']
+        start = datetime.strptime(self.request.query_params['start'], DTPATT)
+        end = datetime.strptime(self.request.query_params['end'], DTPATT)
+
+        return Play.objects.filter(channel=channel, start__gte=start,
+                                   end__lte=end)
