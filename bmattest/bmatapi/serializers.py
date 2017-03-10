@@ -37,3 +37,11 @@ class GetSongSerializer(serializers.ModelSerializer):
     class Meta:
         model = Play
         fields = ('channel', 'start', 'end')
+
+
+class GetTopSerializer(serializers.ModelSerializer):
+    # rank = serializers.IntegerField(default=0)
+
+    class Meta:
+        model = Play
+        fields = ('performer', 'title', 'rank')

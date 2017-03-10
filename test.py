@@ -257,5 +257,5 @@ if __name__ == '__main__':
         add_plays()
     check_channel_plays()
     check_song_plays()
-    # check_top()
+    check_top()
     print "Success!"

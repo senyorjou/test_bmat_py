@@ -1,3 +1,4 @@
+import ast
 from datetime import datetime
 
 from rest_framework import generics, status
@@ -11,7 +12,8 @@ from .models import Play
 from .serializers import ChannelSerializer, PerformerSerializer,\
                          PlaySerializer, SongSerializer
 #  GET serializers
-from .serializers import GetChannelSerializer, GetSongSerializer
+from .serializers import GetChannelSerializer, GetSongSerializer,\
+                         GetTopSerializer
 
 DTPATT = '%Y-%m-%dT%H:%M:%S'
 
@@ -141,3 +143,17 @@ class GetSongPlays(generics.ListAPIView):
 
         return Play.objects.filter(title=title, performer=performer,
                                    start__gte=start, end__lte=end)
+
+
+class GetTop(generics.ListAPIView):
+    serializer_class = GetTopSerializer
+    renderer_classes = (CustomJSONRenderer, )
+
+    def get_queryset(self):
+        channels = ast.literal_eval(self.request.query_params['channels'])
+        print channels, type(channels)
+        # limit = self.request.query_params['limit']
+        start = datetime.strptime(self.request.query_params['start'], DTPATT)
+
+        return Play.objects.filter(channel__name__in=channels,
+                                   start__gte=start)

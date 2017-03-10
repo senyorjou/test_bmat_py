@@ -42,5 +42,8 @@ class Play(models.Model):
     def __unicode__(self):
         return self.title.title
 
+    def rank(self):
+        return 0
+
     class Meta:
         unique_together = ("channel", "start")
