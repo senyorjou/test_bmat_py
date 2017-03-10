@@ -1,12 +1,14 @@
 import ast
-from datetime import datetime
+from collections import Counter
+from datetime import datetime, timedelta
 
+# from django.db.models.aggregates import Count
 from rest_framework import generics, status
 from rest_framework.views import APIView
 from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
 
-from .models import Play
+from .models import Play, Song
 
 #  POST serializers
 from .serializers import ChannelSerializer, PerformerSerializer,\
@@ -145,15 +147,63 @@ class GetSongPlays(generics.ListAPIView):
                                    start__gte=start, end__lte=end)
 
 
-class GetTop(generics.ListAPIView):
+class GetTopOld(generics.ListAPIView):
     serializer_class = GetTopSerializer
     renderer_classes = (CustomJSONRenderer, )
 
     def get_queryset(self):
         channels = ast.literal_eval(self.request.query_params['channels'])
-        print channels, type(channels)
         # limit = self.request.query_params['limit']
         start = datetime.strptime(self.request.query_params['start'], DTPATT)
 
         return Play.objects.filter(channel__name__in=channels,
                                    start__gte=start)
+
+
+class GetTop(APIView):
+    def get(self, request, format=None):
+
+        channels = ast.literal_eval(self.request.query_params['channels'])
+        pivot_date = datetime.strptime(self.request.query_params['start'],
+                                       DTPATT)
+        limit = int(self.request.query_params['limit'])
+        start = pivot_date - timedelta(days=7)
+        end = pivot_date + timedelta(days=7)
+
+        prev_plays_qs = Play.objects.filter(start__gte=start,
+                                            end__lt=pivot_date,
+                                            channel__name__in=channels)
+        week_plays_qs = Play.objects.filter(start__gte=pivot_date,
+                                            end__lte=end,
+                                            channel__name__in=channels)
+
+        prev_plays = Counter(prev_plays_qs.values_list('title', flat=True))
+        week_plays = Counter(week_plays_qs.values_list('title', flat=True))
+        prev_ranks = {s[0]: i for i, s in
+                      enumerate(prev_plays.most_common())}
+        week_ranks = {s[0]: i for i, s in
+                      enumerate(week_plays.most_common())}
+
+        songs = Song.objects.filter(title__in=week_plays.keys())
+
+        song_list = []
+        for i, song_item in enumerate(week_ranks):
+            if i >= limit:
+                break
+            song = songs.get(title=song_item)
+            prev_counts = prev_plays[song.title]
+            week_counts = week_plays[song.title]
+            prev_rank = prev_ranks[song.title]
+            week_rank = week_ranks[song.title]
+            song_list.append({
+                'performer': song.performer.name, 'title': song.title,
+                'plays': week_counts, 'previous_plays': prev_counts,
+                'rank': week_rank, 'previous_rank': prev_rank
+            })
+
+        response = {
+            'code': 0,
+            'result': song_list
+        }
+
+        return Response(response, status=status.HTTP_200_OK)
