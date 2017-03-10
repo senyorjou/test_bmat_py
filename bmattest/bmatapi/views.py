@@ -11,7 +11,7 @@ from .models import Play
 from .serializers import ChannelSerializer, PerformerSerializer,\
                          PlaySerializer, SongSerializer
 #  GET serializers
-from .serializers import GetChannelSerializer
+from .serializers import GetChannelSerializer, GetSongSerializer
 
 DTPATT = '%Y-%m-%dT%H:%M:%S'
 
@@ -116,7 +116,7 @@ class PlayView(APIView):
         return Response(response, status=status.HTTP_200_OK)
 
 
-class GetChannelPlay(generics.ListAPIView):
+class GetChannelPlays(generics.ListAPIView):
     serializer_class = GetChannelSerializer
     renderer_classes = (CustomJSONRenderer, )
 
@@ -127,3 +127,17 @@ class GetChannelPlay(generics.ListAPIView):
 
         return Play.objects.filter(channel=channel, start__gte=start,
                                    end__lte=end)
+
+
+class GetSongPlays(generics.ListAPIView):
+    serializer_class = GetSongSerializer
+    renderer_classes = (CustomJSONRenderer, )
+
+    def get_queryset(self):
+        title = self.request.query_params['title']
+        performer = self.request.query_params['performer']
+        start = datetime.strptime(self.request.query_params['start'], DTPATT)
+        end = datetime.strptime(self.request.query_params['end'], DTPATT)
+
+        return Play.objects.filter(title=title, performer=performer,
+                                   start__gte=start, end__lte=end)

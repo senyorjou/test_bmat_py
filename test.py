@@ -256,6 +256,6 @@ if __name__ == '__main__':
     if args.add_data:
         add_plays()
     check_channel_plays()
-    # check_song_plays()
+    check_song_plays()
     # check_top()
     print "Success!"

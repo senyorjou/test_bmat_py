@@ -31,3 +31,9 @@ class GetChannelSerializer(serializers.ModelSerializer):
     class Meta:
         model = Play
         fields = ('performer', 'title', 'start', 'end')
+
+
+class GetSongSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Play
+        fields = ('channel', 'start', 'end')
